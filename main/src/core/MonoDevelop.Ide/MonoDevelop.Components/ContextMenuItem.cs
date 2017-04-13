@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using MonoDevelop.Core;
 
 namespace MonoDevelop.Components
@@ -51,6 +52,13 @@ namespace MonoDevelop.Components
 
 	public class ContextMenuItem
 	{
+		static HashSet<string> LocaleWithSpecialMnemonics = new HashSet<string> {
+			"ja",
+			"ko",
+			"zh_CN",
+			"zh_TW",
+		};
+
 		ContextMenu subMenu;
 		Xwt.Drawing.Image image;
 
@@ -66,7 +74,14 @@ namespace MonoDevelop.Components
 		public ContextMenuItem (string label) : this()
 		{
 			#if MAC
-			Label = label.Replace ("_", "");
+			// Strip out mnemonics for supported non-latin languages - i.e. zh_CN has "(_A)"
+			if (LocaleWithSpecialMnemonics.Contains (GettextCatalog.UILocale)) {
+				int index = label.LastIndexOf ('(');
+				if (label.Length >= index + 3 && label [index + 1] == '_' && label [index + 3] == ')')
+					Label = label.Remove (index, 4);
+			} else {
+				Label = label.Replace ("_", "");
+			}
 			#else
 			Label = label;
 			#endif
